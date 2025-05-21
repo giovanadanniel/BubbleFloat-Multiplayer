@@ -62,12 +62,45 @@
       particles = [];
       messages = [];
       for (let i = 0; i < 8; i++) {
-        miniBubbles.push({ x: random(80, width - 80), y: random(80, height - 80), r: 5, col: random() < 0.5 ? color(255, 255, 0) : color(0, 255, 0) });
+        miniBubbles.push({ x: random(80, width - 80), y: random(80, height - 80), r: 5, col: random() < 0.5 ? 'yellow' : 'green' });
       }
       for (let x = 0; x < width; x += 30) {
         spikes.push({ x: x, y: 40, r: 10 });
         spikes.push({ x: x, y: height - 40, r: 10 });
       }
+    }
+
+    function drawSoapBubble(x, y, r, baseColor) {
+      let gradient = drawingContext.createRadialGradient(x - r / 2, y - r / 2, 0, x, y, r);
+      gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+      gradient.addColorStop(0.3, `rgba(${baseColor.r}, ${baseColor.g}, ${baseColor.b}, 0.5)`);
+      gradient.addColorStop(0.7, 'rgba(200, 200, 255, 0.3)');
+      gradient.addColorStop(1, 'rgba(255, 255, 255, 0.1)');
+      drawingContext.fillStyle = gradient;
+      let pulse = sin(frameCount * 0.05) * 2;
+      circle(x, y, (r + pulse) * 2);
+      stroke(255, 255, 255, 150);
+      drawingContext.shadowBlur = 4;
+      drawingContext.shadowColor = `rgba(${baseColor.r}, ${baseColor.g}, ${baseColor.b}, 0.5)`;
+      circle(x, y, (r + pulse) * 2);
+      noStroke();
+      drawingContext.shadowBlur = 0;
+    }
+
+    function drawMiniSoapBubble(x, y, r, type) {
+      let gradient = drawingContext.createRadialGradient(x - r / 2, y - r / 2, 0, x, y, r);
+      gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+      gradient.addColorStop(0.3, type === 'yellow' ? 'rgba(255, 255, 200, 0.5)' : 'rgba(200, 255, 200, 0.5)');
+      gradient.addColorStop(0.7, 'rgba(200, 200, 255, 0.3)');
+      gradient.addColorStop(1, 'rgba(255, 255, 255, 0.1)');
+      drawingContext.fillStyle = gradient;
+      circle(x, y, r * 2);
+      stroke(255, 255, 255, 100);
+      drawingContext.shadowBlur = 2;
+      drawingContext.shadowColor = type === 'yellow' ? '#ffffcc' : '#ccffcc';
+      circle(x, y, r * 2 + 2);
+      noStroke();
+      drawingContext.shadowBlur = 0;
     }
 
     function draw() {
@@ -114,15 +147,11 @@
         bubble2.y = constrain(bubble2.y, 40, height - 40);
         // Desenha e verifica colisão com mini-bolhas
         for (let i = miniBubbles.length - 1; i >= 0; i--) {
-          fill(miniBubbles[i].col);
-          circle(miniBubbles[i].x, miniBubbles[i].y, miniBubbles[i].r * 2);
-          stroke(255, 255, 255, 100);
-          circle(miniBubbles[i].x, miniBubbles[i].y, miniBubbles[i].r * 2 + 4);
-          noStroke();
+          drawMiniSoapBubble(miniBubbles[i].x, miniBubbles[i].y, miniBubbles[i].r, miniBubbles[i].col);
           let d1 = dist(bubble1.x, bubble1.y, miniBubbles[i].x, miniBubbles[i].y);
           if (d1 < bubble1.r + miniBubbles[i].r && miniBubbles[i].x < width / 2) {
             for (let j = 0; j < 5; j++) {
-              particles.push({ x: miniBubbles[i].x, y: miniBubbles[i].y, vx: random(-2, 2), vy: random(-2, 2), life: 30, col: miniBubbles[i].col });
+              particles.push({ x: miniBubbles[i].x, y: miniBubbles[i].y, vx: random(-2, 2), vy: random(-2, 2), life: 30, col: color(255, 255, 255, 100) });
             }
             let prevScore1 = score1;
             score1 += 10;
@@ -135,14 +164,14 @@
               messages.push({ text: "100 pontos atingidos!", x: width / 4, y: height / 2, col: color(0, 255, 255), life: 120 });
             }
             miniBubbles.splice(i, 1);
-            miniBubbles.push({ x: random(80, width / 2 - 40), y: random(80, height - 80), r: 5, col: random() < 0.5 ? color(255, 255, 0) : color(0, 255, 0) });
+            miniBubbles.push({ x: random(80, width / 2 - 40), y: random(80, height - 80), r: 5, col: random() < 0.5 ? 'yellow' : 'green' });
             lastMessage = "Um desejo para J1!";
             messageTimer = 120;
           }
           let d2 = dist(bubble2.x, bubble2.y, miniBubbles[i].x, miniBubbles[i].y);
           if (d2 < bubble2.r + miniBubbles[i].r && miniBubbles[i].x > width / 2) {
             for (let j = 0; j < 5; j++) {
-              particles.push({ x: miniBubbles[i].x, y: miniBubbles[i].y, vx: random(-2, 2), vy: random(-2, 2), life: 30, col: miniBubbles[i].col });
+              particles.push({ x: miniBubbles[i].x, y: miniBubbles[i].y, vx: random(-2, 2), vy: random(-2, 2), life: 30, col: color(255, 255, 255, 100) });
             }
             let prevScore2 = score2;
             score2 += 10;
@@ -155,7 +184,7 @@
               messages.push({ text: "100 pontos atingidos!", x: 3 * width / 4, y: height / 2, col: color(255, 0, 255), life: 120 });
             }
             miniBubbles.splice(i, 1);
-            miniBubbles.push({ x: random(width / 2 + 40, width - 80), y: random(80, height - 80), r: 5, col: random() < 0.5 ? color(255, 255, 0) : color(0, 255, 0) });
+            miniBubbles.push({ x: random(width / 2 + 40, width - 80), y: random(80, height - 80), r: 5, col: random() < 0.5 ? 'yellow' : 'green' });
             lastMessage = "Um desejo para J2!";
             messageTimer = 120;
           }
@@ -177,14 +206,9 @@
           p.life--;
           if (p.life <= 0) particles.splice(i, 1);
         }
-        // Desenha bolhas principais com brilho neon
-        let pulse = sin(frameCount * 0.1) * 3;
-        fill(0, 255, 255, 200); // Ciano para J1
-        stroke(255, 255, 255, 150);
-        circle(bubble1.x, bubble1.y, bubble1.r * 2 + pulse);
-        fill(255, 0, 255, 200); // Magenta para J2
-        circle(bubble2.x, bubble2.y, bubble2.r * 2 + pulse);
-        noStroke();
+        // Desenha bolhas principais como bolhas de sabão
+        drawSoapBubble(bubble1.x, bubble1.y, bubble1.r, { r: 0, g: 255, b: 255 }); // Ciano para J1
+        drawSoapBubble(bubble2.x, bubble2.y, bubble2.r, { r: 255, g: 0, b: 255 }); // Magenta para J2
         // Linha divisória neon
         stroke(255, 255, 255, 200 + sin(frameCount * 0.05) * 50);
         line(width / 2, 0, width / 2, height);
@@ -236,14 +260,14 @@
           let d1 = dist(bubble1.x, bubble1.y, spike.x, spike.y);
           if (d1 < bubble1.r + spike.r) {
             for (let j = 0; j < 10; j++) {
-              particles.push({ x: bubble1.x, y: bubble1.y, vx: random(-3, 3), vy: random(-3, 3), life: 30, col: color(0, 255, 255) });
+              particles.push({ x: bubble1.x, y: bubble1.y, vx: random(-3, 3), vy: random(-3, 3), life: 30, col: color(0, 255, 255, 100) });
             }
             gameState = "gameover";
           }
           let d2 = dist(bubble2.x, bubble2.y, spike.x, spike.y);
           if (d2 < bubble2.r + spike.r) {
             for (let j = 0; j < 10; j++) {
-              particles.push({ x: bubble2.x, y: bubble2.y, vx: random(-3, 3), vy: random(-3, 3), life: 30, col: color(255, 0, 255) });
+              particles.push({ x: bubble2.x, y: bubble2.y, vx: random(-3, 3), vy: random(-3, 3), life: 30, col: color(255, 0, 255, 100) });
             }
             gameState = "gameover";
           }
