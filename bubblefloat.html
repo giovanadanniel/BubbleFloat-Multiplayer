@@ -1,337 +1,326 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Bubble Float Multiplayer</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
-  <style>
-    body { margin: 0; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; }
-    canvas { border: 2px solid #0ff; box-shadow: 0 0 20px #0ff; }
-    #game-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 36px;
-      font-weight: bold;
-      text-align: center;
-      margin-bottom: 20px;
-      animation: neonGlow 3s infinite;
-      text-shadow: 0 0 8px #0ff, 0 0 15px #0ff;
-    }
-    @keyframes neonGlow {
-      0% { color: #0ff; }
-      33% { color: #f0f; }
-      66% { color: #0f0; }
-      100% { color: #0ff; }
-    }
-  </style>
+    <title>Bubble Float Multiplayer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; }
+        canvas { border: 2px solid #0ff; box-shadow: 0 0 20px #0ff; }
+        #game-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 36px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            animation: neonGlow 3s infinite;
+            text-shadow: 0 0 8px #0ff, 0 0 15px #0ff;
+        }
+        @keyframes neonGlow {
+            0% { color: #0ff; }
+            33% { color: #f0f; }
+            66% { color: #0f0; }
+            100% { color: #0ff; }
+        }
+    </style>
 </head>
 <body>
-  <div id="game-title">Bubble Float Multiplayer</div>
-  <script>
-    let bubble1, bubble2;
-    let miniBubbles = [];
-    let spikes = [];
-    let score1 = 0, score2 = 0;
-    let timeLeft = 50;
-    let gameState = "start";
-    let lastMessage = "";
-    let messageTimer = 0;
-    let finishTime1 = null, finishTime2 = null;
-    let particles = [];
-    let messages = [];
+    <div id="game-title">Bubble Float Multiplayer</div>
+    <script>
+        let bubble1, bubble2;
+        let miniBubbles = [];
+        let spikes = [];
+        let score1 = 0, score2 = 0;
+        let timeLeft = 50;
+        let gameState = "start";
+        let lastMessage = "";
+        let messageTimer = 0;
+        let particles = [];
+        let messages = [];
+        let player1Popped = false;
+        let player2Popped = false;
 
-    function setup() {
-      createCanvas(800, 400);
-      textAlign(CENTER);
-      textFont('Orbitron');
-      textSize(20);
-      resetLevel();
-    }
+        function setup() {
+            createCanvas(800, 400);
+            textAlign(CENTER);
+            textFont('Orbitron');
+            textSize(20);
+            resetLevel();
+        }
 
-    function resetLevel() {
-      bubble1 = { x: 50, y: height / 2, r: 15 };
-      bubble2 = { x: width - 50, y: height / 2, r: 15 };
-      miniBubbles = [];
-      spikes = [];
-      score1 = 0;
-      score2 = 0;
-      timeLeft = 50;
-      finishTime1 = null;
-      finishTime2 = null;
-      lastMessage = "";
-      messageTimer = 0;
-      particles = [];
-      messages = [];
-      for (let i = 0; i < 8; i++) {
-        miniBubbles.push({ x: random(80, width - 80), y: random(80, height - 80), r: 5, col: random() < 0.5 ? 'yellow' : 'green' });
-      }
-      for (let x = 0; x < width; x += 30) {
-        spikes.push({ x: x, y: 40, r: 10 });
-        spikes.push({ x: x, y: height - 40, r: 10 });
-      }
-    }
+        function resetLevel() {
+            bubble1 = { x: 50, y: height / 2, r: 15 };
+            bubble2 = { x: width - 50, y: height / 2, r: 15 };
+            miniBubbles = [];
+            spikes = [];
+            score1 = 0;
+            score2 = 0;
+            timeLeft = 50;
+            lastMessage = "";
+            messageTimer = 0;
+            particles = [];
+            messages = [];
+            player1Popped = false;
+            player2Popped = false;
+            for (let i = 0; i < 8; i++) {
+                miniBubbles.push({ x: random(80, width - 80), y: random(80, height - 80), r: 5, col: random() < 0.5 ? 'yellow' : 'green' });
+            }
+            for (let x = 0; x < width; x += 30) {
+                spikes.push({ x: x, y: 40, r: 10 });
+                spikes.push({ x: x, y: height - 40, r: 10 });
+            }
+        }
 
-    function drawSoapBubble(x, y, r, baseColor) {
-      let gradient = drawingContext.createRadialGradient(x - r / 2, y - r / 2, 0, x, y, r);
-      gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
-      gradient.addColorStop(0.3, `rgba(${baseColor.r}, ${baseColor.g}, ${baseColor.b}, 0.5)`);
-      gradient.addColorStop(0.7, 'rgba(200, 200, 255, 0.3)');
-      gradient.addColorStop(1, 'rgba(255, 255, 255, 0.1)');
-      drawingContext.fillStyle = gradient;
-      let pulse = sin(frameCount * 0.05) * 2;
-      circle(x, y, (r + pulse) * 2);
-      stroke(255, 255, 255, 150);
-      drawingContext.shadowBlur = 4;
-      drawingContext.shadowColor = `rgba(${baseColor.r}, ${baseColor.g}, ${baseColor.b}, 0.5)`;
-      circle(x, y, (r + pulse) * 2);
-      noStroke();
-      drawingContext.shadowBlur = 0;
-    }
+        function drawSoapBubble(x, y, r, baseColor) {
+            let gradient = drawingContext.createRadialGradient(x - r / 2, y - r / 2, 0, x, y, r);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+            gradient.addColorStop(0.3, `rgba(${baseColor.r}, ${baseColor.g}, ${baseColor.b}, 0.5)`);
+            gradient.addColorStop(0.7, 'rgba(200, 200, 255, 0.3)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0.1)');
+            drawingContext.fillStyle = gradient;
+            let pulse = sin(frameCount * 0.05) * 2;
+            circle(x, y, (r + pulse) * 2);
+            stroke(255, 255, 255, 150);
+            drawingContext.shadowBlur = 4;
+            drawingContext.shadowColor = `rgba(${baseColor.r}, ${baseColor.g}, ${baseColor.b}, 0.5)`;
+            circle(x, y, (r + pulse) * 2);
+            noStroke();
+            drawingContext.shadowBlur = 0;
+        }
 
-    function drawMiniSoapBubble(x, y, r, type) {
-      let gradient = drawingContext.createRadialGradient(x - r / 2, y - r / 2, 0, x, y, r);
-      gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
-      gradient.addColorStop(0.3, type === 'yellow' ? 'rgba(255, 255, 200, 0.5)' : 'rgba(200, 255, 200, 0.5)');
-      gradient.addColorStop(0.7, 'rgba(200, 200, 255, 0.3)');
-      gradient.addColorStop(1, 'rgba(255, 255, 255, 0.1)');
-      drawingContext.fillStyle = gradient;
-      circle(x, y, r * 2);
-      stroke(255, 255, 255, 100);
-      drawingContext.shadowBlur = 2;
-      drawingContext.shadowColor = type === 'yellow' ? '#ffffcc' : '#ccffcc';
-      circle(x, y, r * 2 + 2);
-      noStroke();
-      drawingContext.shadowBlur = 0;
-    }
+        function drawMiniSoapBubble(x, y, r, type) {
+            let gradient = drawingContext.createRadialGradient(x - r / 2, y - r / 2, 0, x, y, r);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+            gradient.addColorStop(0.3, type === 'yellow' ? 'rgba(255, 255, 200, 0.5)' : 'rgba(200, 255, 200, 0.5)');
+            gradient.addColorStop(0.7, 'rgba(200, 200, 255, 0.3)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0.1)');
+            drawingContext.fillStyle = gradient;
+            circle(x, y, r * 2);
+            stroke(255, 255, 255, 100);
+            drawingContext.shadowBlur = 2;
+            drawingContext.shadowColor = type === 'yellow' ? '#ffffcc' : '#ccffcc';
+            circle(x, y, r * 2 + 2);
+            noStroke();
+            drawingContext.shadowBlur = 0;
+        }
 
-    function draw() {
-      // Fundo neon com gradiente
-      for (let y = 0; y < height; y++) {
-        let c = lerpColor(color(0, 0, 50), color(0, 0, 0), y / height);
-        stroke(c);
-        line(0, y, width, y);
-      }
-      // Linhas dinâmicas tecnológicas
-      stroke(0, 255, 255, 50);
-      for (let y = 0; y < height; y += 20) {
-        line(0, (y + frameCount % 100) % height, width, (y + frameCount % 100) % height);
-      }
-      noStroke();
-      if (gameState === "start") {
-        textSize(30);
-        fill(0, 0, 0, 150); // Fundo preto semi-transparente
-        rect(width / 2 - 200, height / 2 - 100, 400, 200);
-        fill(0, 255, 255 + sin(frameCount * 0.1) * 50); // Alterna ciano
-        if (frameCount % 60 < 20) fill(255, 0, 255 + sin(frameCount * 0.1) * 50); // Magenta
-        else if (frameCount % 60 < 40) fill(0, 255, 0 + sin(frameCount * 0.1) * 50); // Verde
-        textStyle(BOLD);
-        textShadow(0, 0, 8, '#0ff');
-        text("Bubble Float Multiplayer\nLeve os desejos da Turma 2025!\nJogador 1: WASD | Jogador 2: Setas\nClique para começar", width / 2, height / 2);
-        textStyle(NORMAL);
-        textSize(20);
-      } else if (gameState === "play") {
-        if (frameCount % 60 === 0) timeLeft--;
-        // Move jogador 1 (WASD)
-        if (keyIsDown(87)) bubble1.y -= 10;
-        if (keyIsDown(65)) bubble1.x -= 10;
-        if (keyIsDown(83)) bubble1.y += 10;
-        if (keyIsDown(68)) bubble1.x += 10;
-        // Move jogador 2 (setas)
-        if (keyIsDown(LEFT_ARROW)) bubble2.x -= 10;
-        if (keyIsDown(RIGHT_ARROW)) bubble2.x += 10;
-        if (keyIsDown(UP_ARROW)) bubble2.y -= 10;
-        if (keyIsDown(DOWN_ARROW)) bubble2.y += 10;
-        // Limita bolhas à tela
-        bubble1.x = constrain(bubble1.x, 0, width / 2 - bubble1.r);
-        bubble1.y = constrain(bubble1.y, 40, height - 40);
-        bubble2.x = constrain(bubble2.x, width / 2 + bubble2.r, width);
-        bubble2.y = constrain(bubble2.y, 40, height - 40);
-        // Desenha e verifica colisão com mini-bolhas
-        for (let i = miniBubbles.length - 1; i >= 0; i--) {
-          drawMiniSoapBubble(miniBubbles[i].x, miniBubbles[i].y, miniBubbles[i].r, miniBubbles[i].col);
-          let d1 = dist(bubble1.x, bubble1.y, miniBubbles[i].x, miniBubbles[i].y);
-          if (d1 < bubble1.r + miniBubbles[i].r && miniBubbles[i].x < width / 2) {
-            for (let j = 0; j < 5; j++) {
-              particles.push({ x: miniBubbles[i].x, y: miniBubbles[i].y, vx: random(-2, 2), vy: random(-2, 2), life: 30, col: color(255, 255, 255, 100) });
+        function draw() {
+            // Fundo neon com gradiente
+            for (let y = 0; y < height; y++) {
+                let c = lerpColor(color(0, 0, 50), color(0, 0, 0), y / height);
+                stroke(c);
+                line(0, y, width, y);
             }
-            let prevScore1 = score1;
-            score1 += 10;
-            let msgText = random(["Sucesso!", "Boa!"]);
-            messages.push({ text: msgText, x: miniBubbles[i].x, y: miniBubbles[i].y, col: color(0, 255, 255), life: 60 });
-            if (score1 >= 80 && prevScore1 < 80) {
-              messages.push({ text: "Continue, quase lá!", x: width / 4, y: height / 2, col: color(0, 255, 255), life: 120 });
+            // Linhas dinâmicas tecnológicas
+            stroke(0, 255, 255, 50);
+            for (let y = 0; y < height; y += 20) {
+                line(0, (y + frameCount % 100) % height, width, (y + frameCount % 100) % height);
             }
-            if (score1 >= 100 && prevScore1 < 100) {
-              messages.push({ text: "100 pontos atingidos!", x: width / 4, y: height / 2, col: color(0, 255, 255), life: 120 });
-            }
-            miniBubbles.splice(i, 1);
-            miniBubbles.push({ x: random(80, width / 2 - 40), y: random(80, height - 80), r: 5, col: random() < 0.5 ? 'yellow' : 'green' });
-            lastMessage = "Um desejo para J1!";
-            messageTimer = 120;
-          }
-          let d2 = dist(bubble2.x, bubble2.y, miniBubbles[i].x, miniBubbles[i].y);
-          if (d2 < bubble2.r + miniBubbles[i].r && miniBubbles[i].x > width / 2) {
-            for (let j = 0; j < 5; j++) {
-              particles.push({ x: miniBubbles[i].x, y: miniBubbles[i].y, vx: random(-2, 2), vy: random(-2, 2), life: 30, col: color(255, 255, 255, 100) });
-            }
-            let prevScore2 = score2;
-            score2 += 10;
-            let msgText = random(["Sucesso!", "Boa!"]);
-            messages.push({ text: msgText, x: miniBubbles[i].x, y: miniBubbles[i].y, col: color(255, 0, 255), life: 60 });
-            if (score2 >= 80 && prevScore2 < 80) {
-              messages.push({ text: "Continue, quase lá!", x: 3 * width / 4, y: height / 2, col: color(255, 0, 255), life: 120 });
-            }
-            if (score2 >= 100 && prevScore2 < 100) {
-              messages.push({ text: "100 pontos atingidos!", x: 3 * width / 4, y: height / 2, col: color(255, 0, 255), life: 120 });
-            }
-            miniBubbles.splice(i, 1);
-            miniBubbles.push({ x: random(width / 2 + 40, width - 80), y: random(80, height - 80), r: 5, col: random() < 0.5 ? 'yellow' : 'green' });
-            lastMessage = "Um desejo para J2!";
-            messageTimer = 120;
-          }
-        }
-        // Desenha espinhos
-        for (let spike of spikes) {
-          fill(255, 0, 0);
-          stroke(255, 255, 255, 150);
-          triangle(spike.x, spike.y, spike.x - 10, spike.y + 10, spike.x + 10, spike.y + 10);
-          noStroke();
-        }
-        // Desenha partículas
-        for (let i = particles.length - 1; i >= 0; i--) {
-          let p = particles[i];
-          fill(p.col);
-          circle(p.x, p.y, 3);
-          p.x += p.vx;
-          p.y += p.vy;
-          p.life--;
-          if (p.life <= 0) particles.splice(i, 1);
-        }
-        // Desenha bolhas principais como bolhas de sabão
-        drawSoapBubble(bubble1.x, bubble1.y, bubble1.r, { r: 0, g: 255, b: 255 }); // Ciano para J1
-        drawSoapBubble(bubble2.x, bubble2.y, bubble2.r, { r: 255, g: 0, b: 255 }); // Magenta para J2
-        // Linha divisória neon
-        stroke(255, 255, 255, 200 + sin(frameCount * 0.05) * 50);
-        line(width / 2, 0, width / 2, height);
-        noStroke();
-        // Mostra placares, tempo e mensagem
-        fill(0, 255, 255);
-        textShadow(0, 0, 4, '#0ff');
-        text(`J1: ${score1}`, 50, 30);
-        text(`J2: ${score2}`, width - 50, 30);
-        text(`Tempo: ${timeLeft}`, width / 2, 30);
-        if (messageTimer > 0) {
-          fill(0, 0, 0, 150);
-          rect(width / 2 - 100, height - 40, 200, 20);
-          fill(0, 255, 255);
-          text(lastMessage, width / 2, height - 30);
-          messageTimer--;
-        }
-        // Desenha mensagens dinâmicas
-        textSize(24);
-        for (let i = messages.length - 1; i >= 0; i--) {
-          let msg = messages[i];
-          let tw = textWidth(msg.text);
-          fill(0, 0, 0, 150); // Fundo preto semi-transparente
-          rect(msg.x - tw / 2 - 5, msg.y - 20, tw + 10, 24);
-          fill(msg.col);
-          textShadow(0, 0, 4, '#0ff');
-          text(msg.text, msg.x, msg.y);
-          msg.y += 1; // Movimento descendente
-          msg.life--;
-          if (msg.life <= 0) messages.splice(i, 1);
-        }
-        textSize(20);
-        // Verifica vitória
-        if (score1 >= 100 && finishTime1 === null) {
-          finishTime1 = 50 - timeLeft;
-        }
-        if (score2 >= 100 && finishTime2 === null) {
-          finishTime2 = 50 - timeLeft;
-        }
-        if ((finishTime1 !== null && finishTime2 !== null) || timeLeft <= 0) {
-          gameState = "win";
-        }
-        // Verifica derrota
-        if (timeLeft <= 0 && (score1 < 100 || score2 < 100)) {
-          gameState = "gameover";
-        }
-        // Colisão com espinhos
-        for (let spike of spikes) {
-          let d1 = dist(bubble1.x, bubble1.y, spike.x, spike.y);
-          if (d1 < bubble1.r + spike.r) {
-            for (let j = 0; j < 10; j++) {
-              particles.push({ x: bubble1.x, y: bubble1.y, vx: random(-3, 3), vy: random(-3, 3), life: 30, col: color(0, 255, 255, 100) });
-            }
-            gameState = "gameover";
-          }
-          let d2 = dist(bubble2.x, bubble2.y, spike.x, spike.y);
-          if (d2 < bubble2.r + spike.r) {
-            for (let j = 0; j < 10; j++) {
-              particles.push({ x: bubble2.x, y: bubble2.y, vx: random(-3, 3), vy: random(-3, 3), life: 30, col: color(255, 0, 255, 100) });
-            }
-            gameState = "gameover";
-          }
-        }
-      } else if (gameState === "win") {
-        textSize(30);
-        fill(0, 0, 0, 150);
-        rect(width / 2 - 200, height / 2 - 100, 400, 200);
-        fill(0, 255, 255 + sin(frameCount * 0.1) * 50);
-        if (frameCount % 60 < 20) fill(255, 0, 255 + sin(frameCount * 0.1) * 50);
-        else if (frameCount % 60 < 40) fill(0, 255, 0 + sin(frameCount * 0.1) * 50);
-        textStyle(BOLD);
-        textShadow(0, 0, 8, '#0ff');
-        let winner;
-        if (finishTime1 !== null && finishTime2 !== null) {
-          winner = finishTime1 < finishTime2 ? "Jogador 1" : finishTime1 > finishTime2 ? "Jogador 2" : "Empate";
-        } else if (finishTime1 !== null) {
-          winner = "Jogador 1";
-        } else if (finishTime2 !== null) {
-          winner = "Jogador 2";
-        } else {
-          winner = "Ninguém";
-        }
-        text(`Vitória! ${winner} venceu!\nJ1: ${score1} pontos, ${finishTime1 !== null ? finishTime1 : "incompleto"}s\nJ2: ${score2} pontos, ${finishTime2 !== null ? finishTime2 : "incompleto"}s\nClique para jogar novamente`, width / 2, height / 2);
-        textStyle(NORMAL);
-        textSize(20);
-      } else if (gameState === "gameover") {
-        textSize(30);
-        fill(0, 0, 0, 150);
-        rect(width / 2 - 200, height / 2 - 100, 400, 200);
-        fill(0, 255, 255 + sin(frameCount * 0.1) * 50);
-        if (frameCount % 60 < 20) fill(255, 0, 255 + sin(frameCount * 0.1) * 50);
-        else if (frameCount % 60 < 40) fill(0, 255, 0 + sin(frameCount * 0.1) * 50);
-        textStyle(BOLD);
-        textShadow(0, 0, 8, '#0ff');
-        text(`Game Over! Uma bolha estourou.\nJ1: ${score1} pontos, ${finishTime1 !== null ? finishTime1 : "incompleto"}s\nJ2: ${score2} pontos, ${finishTime2 !== null ? finishTime2 : "incompleto"}s\nClique para tentar novamente`, width / 2, height / 2);
-        textStyle(NORMAL);
-        textSize(20);
-      }
-      // Desenha partículas no final para sobrepor
-      for (let i = particles.length - 1; i >= 0; i--) {
-        let p = particles[i];
-        fill(p.col);
-        circle(p.x, p.y, 3);
-        p.x += p.vx;
-        p.y += p.vy;
-        p.life--;
-        if (p.life <= 0) particles.splice(i, 1);
-      }
-    }
+            noStroke();
+            if (gameState === "start") {
+                textSize(30);
+                fill(0, 0, 0, 150); // Fundo preto semi-transparente
+                rect(width / 2 - 200, height / 2 - 100, 400, 200);
+                fill(0, 255, 255 + sin(frameCount * 0.1) * 50); // Alterna ciano
+                if (frameCount % 60 < 20) fill(255, 0, 255 + sin(frameCount * 0.1) * 50); // Magenta
+                else if (frameCount % 60 < 40) fill(0, 255, 0 + sin(frameCount * 0.1) * 50); // Verde
+                textStyle(BOLD);
+                textShadow(0, 0, 8, '#0ff');
+                text("Bubble Float Multiplayer\nJogador 1: WASD | Jogador 2: Setas\nClique para começar", width / 2, height / 2);
+                textStyle(NORMAL);
+                textSize(20);
+            } else if (gameState === "play") {
+                if (frameCount % 30 === 0 && timeLeft > 0) timeLeft--; // Diminui o tempo apenas se for maior que 0
 
-    function textShadow(x, y, blur, col) {
-      drawingContext.shadowOffsetX = x;
-      drawingContext.shadowOffsetY = y;
-      drawingContext.shadowBlur = blur;
-      drawingContext.shadowColor = col;
-    }
+                // Lógica de movimento e limites da bolha
+                if (keyIsDown(87)) bubble1.y -= 15;
+                if (keyIsDown(65)) bubble1.x -= 15;
+                if (keyIsDown(83)) bubble1.y += 15;
+                if (keyIsDown(68)) bubble1.x += 15;
+                if (keyIsDown(LEFT_ARROW)) bubble2.x -= 15;
+                if (keyIsDown(RIGHT_ARROW)) bubble2.x += 15;
+                if (keyIsDown(UP_ARROW)) bubble2.y -= 15;
+                if (keyIsDown(DOWN_ARROW)) bubble2.y += 15;
+                
+                bubble1.x = constrain(bubble1.x, 0, width / 2 - bubble1.r);
+                bubble1.y = constrain(bubble1.y, 40, height - 40);
+                bubble2.x = constrain(bubble2.x, width / 2 + bubble2.r, width);
+                bubble2.y = constrain(bubble2.y, 40, height - 40);
 
-    function mousePressed() {
-      if (gameState === "start" || gameState === "gameover" || gameState === "win") {
-        resetLevel();
-        gameState = "play";
-      }
-    }
-  </script>
+                // Desenha e verifica colisão com mini-bolhas
+                for (let i = miniBubbles.length - 1; i >= 0; i--) {
+                    drawMiniSoapBubble(miniBubbles[i].x, miniBubbles[i].y, miniBubbles[i].r, miniBubbles[i].col);
+                    
+                    let d1 = dist(bubble1.x, bubble1.y, miniBubbles[i].x, miniBubbles[i].y);
+                    if (d1 < bubble1.r + miniBubbles[i].r && miniBubbles[i].x < width / 2) {
+                        for (let j = 0; j < 5; j++) {
+                            particles.push({ x: miniBubbles[i].x, y: miniBubbles[i].y, vx: random(-2, 2), vy: random(-2, 2), life: 30, col: color(255, 255, 255, 100) });
+                        }
+                        let prevScore1 = score1;
+                        score1 += 10;
+                        let msgText = random(["Sucesso!", "Boa!"]);
+                        messages.push({ text: msgText, x: miniBubbles[i].x, y: miniBubbles[i].y, col: color(0, 255, 255), life: 60 });
+                        if (score1 >= 80 && prevScore1 < 80) {
+                            messages.push({ text: "Continue, quase lá!", x: width / 4, y: height / 2, col: color(0, 255, 255), life: 120 });
+                        }
+                        if (score1 >= 100 && prevScore1 < 100) {
+                            messages.push({ text: "100 pontos atingidos!", x: width / 4, y: height / 2, col: color(0, 255, 255), life: 120 });
+                        }
+                        miniBubbles.splice(i, 1);
+                        miniBubbles.push({ x: random(80, width / 2 - 40), y: random(80, height - 80), r: 5, col: random() < 0.5 ? 'yellow' : 'green' });
+                        lastMessage = "Um desejo para J1!";
+                        messageTimer = 120;
+                    }
+                    let d2 = dist(bubble2.x, bubble2.y, miniBubbles[i].x, miniBubbles[i].y);
+                    if (d2 < bubble2.r + miniBubbles[i].r && miniBubbles[i].x > width / 2) {
+                        for (let j = 0; j < 5; j++) {
+                            particles.push({ x: miniBubbles[i].x, y: miniBubbles[i].y, vx: random(-2, 2), vy: random(-2, 2), life: 30, col: color(255, 255, 255, 100) });
+                        }
+                        let prevScore2 = score2;
+                        score2 += 10;
+                        let msgText = random(["Sucesso!", "Boa!"]);
+                        messages.push({ text: msgText, x: miniBubbles[i].x, y: miniBubbles[i].y, col: color(255, 0, 255), life: 60 });
+                        if (score2 >= 80 && prevScore2 < 80) {
+                            messages.push({ text: "Continue, quase lá!", x: 3 * width / 4, y: height / 2, col: color(255, 0, 255), life: 120 });
+                        }
+                        if (score2 >= 100 && prevScore2 < 100) {
+                            messages.push({ text: "100 pontos atingidos!", x: 3 * width / 4, y: height / 2, col: color(255, 0, 255), life: 120 });
+                        }
+                        miniBubbles.splice(i, 1);
+                        miniBubbles.push({ x: random(width / 2 + 40, width - 80), y: random(80, height - 80), r: 5, col: random() < 0.5 ? 'yellow' : 'green' });
+                        lastMessage = "Um desejo para J2!";
+                        messageTimer = 120;
+                    }
+                }
+                // Desenha espinhos
+                for (let spike of spikes) {
+                    fill(255, 0, 0);
+                    stroke(255, 255, 255, 150);
+                    triangle(spike.x, spike.y, spike.x - 10, spike.y + 10, spike.x + 10, spike.y + 10);
+                    noStroke();
+                }
+                // Desenha partículas
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    let p = particles[i];
+                    fill(p.col);
+                    circle(p.x, p.y, 3);
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life--;
+                    if (p.life <= 0) particles.splice(i, 1);
+                }
+                // Desenha bolhas principais como bolhas de sabão
+                drawSoapBubble(bubble1.x, bubble1.y, bubble1.r, { r: 0, g: 255, b: 255 }); // Ciano para J1
+                drawSoapBubble(bubble2.x, bubble2.y, bubble2.r, { r: 255, g: 0, b: 255 }); // Magenta para J2
+                // Linha divisória neon
+                stroke(255, 255, 255, 200 + sin(frameCount * 0.05) * 50);
+                line(width / 2, 0, width / 2, height);
+                noStroke();
+                // Mostra placares, tempo e mensagem
+                fill(0, 255, 255);
+                textShadow(0, 0, 4, '#0ff');
+                text(`J1: ${score1}`, 50, 30);
+                text(`J2: ${score2}`, width - 50, 30);
+                text(`Tempo: ${timeLeft}`, width / 2, 30);
+                if (messageTimer > 0) {
+                    fill(0, 0, 0, 150);
+                    rect(width / 2 - 100, height - 40, 200, 20);
+                    fill(0, 255, 255);
+                    text(lastMessage, width / 2, height - 30);
+                    messageTimer--;
+                }
+                // Desenha mensagens dinâmicas
+                textSize(24);
+                for (let i = messages.length - 1; i >= 0; i--) {
+                    let msg = messages[i];
+                    let tw = textWidth(msg.text);
+                    fill(0, 0, 0, 150); // Fundo preto semi-transparente
+                    rect(msg.x - tw / 2 - 5, msg.y - 20, tw + 10, 24);
+                    fill(msg.col);
+                    textShadow(0, 0, 4, '#0ff');
+                    text(msg.text, msg.x, msg.y);
+                    msg.y += 1; // Movimento descendente
+                    msg.life--;
+                    if (msg.life <= 0) messages.splice(i, 1);
+                }
+                textSize(20);
+
+                // Lógica de término de jogo: apenas se bolha estourar OU tempo acabar
+                if (player1Popped || player2Popped || timeLeft <= 0) {
+                    gameState = "win";
+                }
+
+                // Colisão com espinhos
+                for (let spike of spikes) {
+                    let d1 = dist(bubble1.x, bubble1.y, spike.x, spike.y);
+                    if (d1 < bubble1.r + spike.r) {
+                        for (let j = 0; j < 10; j++) {
+                            particles.push({ x: bubble1.x, y: bubble1.y, vx: random(-3, 3), vy: random(-3, 3), life: 30, col: color(0, 255, 255, 100) });
+                        }
+                        player1Popped = true; // Define que a bolha do J1 estourou
+                    }
+                    let d2 = dist(bubble2.x, bubble2.y, spike.x, spike.y);
+                    if (d2 < bubble2.r + spike.r) {
+                        for (let j = 0; j < 10; j++) {
+                            particles.push({ x: bubble2.x, y: bubble2.y, vx: random(-3, 3), vy: random(-3, 3), life: 30, col: color(255, 0, 255, 100) });
+                        }
+                        player2Popped = true; // Define que a bolha do J2 estourou
+                    }
+                }
+            } else if (gameState === "win") {
+                textSize(30);
+                fill(0, 0, 0, 150);
+                rect(width / 2 - 200, height / 2 - 100, 400, 200);
+                fill(0, 255, 255 + sin(frameCount * 0.1) * 50);
+                if (frameCount % 60 < 20) fill(255, 0, 255 + sin(frameCount * 0.1) * 50);
+                else if (frameCount % 60 < 40) fill(0, 255, 0 + sin(frameCount * 0.1) * 50);
+                textStyle(BOLD);
+                textShadow(0, 0, 8, '#0ff');
+                let winnerMessage = "";
+
+                if (player1Popped) {
+                    winnerMessage = "J1 estourou a bolha! J2 venceu!";
+                } else if (player2Popped) {
+                    winnerMessage = "J2 estourou a bolha! J1 venceu!";
+                } else if (timeLeft <= 0) { // O jogo terminou por tempo
+                    if (score1 > score2) {
+                        winnerMessage = "Tempo esgotado! J1 venceu por pontos!";
+                    } else if (score2 > score1) {
+                        winnerMessage = "Tempo esgotado! J2 venceu por pontos!";
+                    } else {
+                        winnerMessage = "Tempo esgotado! É um empate!";
+                    }
+                }
+
+                text(`${winnerMessage}\nJ1: ${score1} pontos\nJ2: ${score2} pontos\nClique para jogar novamente`, width / 2, height / 2);
+                textStyle(NORMAL);
+                textSize(20);
+            }
+            // Desenha partículas no final para sobrepor
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                fill(p.col);
+                circle(p.x, p.y, 3);
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+        }
+
+        function textShadow(x, y, blur, col) {
+            drawingContext.shadowOffsetX = x;
+            drawingContext.shadowOffsetY = y;
+            drawingContext.shadowBlur = blur;
+            drawingContext.shadowColor = col;
+        }
+
+        function mousePressed() {
+            if (gameState === "start" || gameState === "win") {
+                resetLevel();
+                gameState = "play";
+            }
+        }
+    </script>
 </body>
 </html>
