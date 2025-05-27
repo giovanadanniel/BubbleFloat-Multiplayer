@@ -3,7 +3,7 @@
 <head>
     <title>Bubble Float Multiplayer</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/addons/p5.sound.min.js"></script> <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body { margin: 0; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; }
         canvas { border: 2px solid #0ff; box-shadow: 0 0 20px #0ff; }
@@ -39,6 +39,12 @@
         let messages = [];
         let player1Popped = false;
         let player2Popped = false;
+        let popSound; // Variável para armazenar o som
+
+        function preload() {
+            // Carrega o arquivo de som. Certifique-se de que 'bolhasom.mp3' esteja na mesma pasta do seu arquivo HTML
+            popSound = loadSound('bolhasom.mp3'); 
+        }
 
         function setup() {
             createCanvas(800, 400);
@@ -153,6 +159,7 @@
                     
                     let d1 = dist(bubble1.x, bubble1.y, miniBubbles[i].x, miniBubbles[i].y);
                     if (d1 < bubble1.r + miniBubbles[i].r && miniBubbles[i].x < width / 2) {
+                        popSound.play(); // Reproduz o som ao estourar mini-bolha
                         for (let j = 0; j < 5; j++) {
                             particles.push({ x: miniBubbles[i].x, y: miniBubbles[i].y, vx: random(-2, 2), vy: random(-2, 2), life: 30, col: color(255, 255, 255, 100) });
                         }
@@ -173,6 +180,7 @@
                     }
                     let d2 = dist(bubble2.x, bubble2.y, miniBubbles[i].x, miniBubbles[i].y);
                     if (d2 < bubble2.r + miniBubbles[i].r && miniBubbles[i].x > width / 2) {
+                        popSound.play(); // Reproduz o som ao estourar mini-bolha
                         for (let j = 0; j < 5; j++) {
                             particles.push({ x: miniBubbles[i].x, y: miniBubbles[i].y, vx: random(-2, 2), vy: random(-2, 2), life: 30, col: color(255, 255, 255, 100) });
                         }
@@ -254,6 +262,7 @@
                 for (let spike of spikes) {
                     let d1 = dist(bubble1.x, bubble1.y, spike.x, spike.y);
                     if (d1 < bubble1.r + spike.r) {
+                        popSound.play(); // Reproduz o som ao estourar na spike
                         for (let j = 0; j < 10; j++) {
                             particles.push({ x: bubble1.x, y: bubble1.y, vx: random(-3, 3), vy: random(-3, 3), life: 30, col: color(0, 255, 255, 100) });
                         }
@@ -261,6 +270,7 @@
                     }
                     let d2 = dist(bubble2.x, bubble2.y, spike.x, spike.y);
                     if (d2 < bubble2.r + spike.r) {
+                        popSound.play(); // Reproduz o som ao estourar na spike
                         for (let j = 0; j < 10; j++) {
                             particles.push({ x: bubble2.x, y: bubble2.y, vx: random(-3, 3), vy: random(-3, 3), life: 30, col: color(255, 0, 255, 100) });
                         }
