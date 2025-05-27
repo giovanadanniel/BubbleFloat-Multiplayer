@@ -136,7 +136,7 @@
                 textStyle(NORMAL);
                 textSize(20);
             } else if (gameState === "play") {
-                if (frameCount % 30 === 0 && timeLeft > 0) timeLeft--; // Diminui o tempo apenas se for maior que 0
+                if (frameCount % 10 === 0 && timeLeft > 0) timeLeft--; // Diminui o tempo apenas se for maior que 0
 
                 // Lógica de movimento e limites da bolha
                 if (keyIsDown(87)) bubble1.y -= 15;
