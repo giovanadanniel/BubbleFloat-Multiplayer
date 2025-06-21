@@ -3,10 +3,22 @@
 <head>
     <title>Bubble Float Multiplayer</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/addons/p5.sound.min.js"></script> <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/addons/p5.sound.min.js"></script> 
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { margin: 0; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; }
-        canvas { border: 2px solid #0ff; box-shadow: 0 0 20px #0ff; }
+        body { 
+            margin: 0; 
+            background: #000; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+        }
+        canvas { 
+            border: 2px solid #0ff; 
+            box-shadow: 0 0 20px #0ff; 
+        }
         #game-title {
             font-family: 'Orbitron', sans-serif;
             font-size: 36px;
@@ -26,6 +38,11 @@
 </head>
 <body>
     <div id="game-title">Bubble Float Multiplayer</div>
+    <div id="author-names" style="font-family: 'Orbitron', sans-serif; font-size: 20px; text-align: center; margin-top: 10px; color: #0ff; animation: neonGlow 3s infinite;">
+        Mirella Haisi Szvarça<br>
+        Giovanna Rita Santos Daniel<br>
+        Leonardo Stall
+    </div>
     <script>
         let bubble1, bubble2;
         let miniBubbles = [];
@@ -40,9 +57,10 @@
         let player1Popped = false;
         let player2Popped = false;
         let popSound; // Variável para armazenar o som
+        let difficulty = "medium"; // Dificuldade padrão
 
         function preload() {
-            // Carrega o arquivo de som. Certifique-se de que 'bolhasom.mp3' esteja na mesma pasta do seu arquivo HTML
+            // Carrega o arquivo de som. Certifique-se que 'bolhasom.mp3' esteja na mesma pasta do seu arquivo HTML
             popSound = loadSound('bolhasom.mp3'); 
         }
 
@@ -54,7 +72,14 @@
             resetLevel();
         }
 
+        function setupDifficulty(selectedDifficulty) {
+            difficulty = selectedDifficulty;
+            resetLevel();
+        }
+
         function resetLevel() {
+            let spikeOffset = difficulty === "easy" ? 40 : difficulty === "medium" ? 60 : 80; // Quanto maior a dificuldade, mais para baixo
+
             bubble1 = { x: 50, y: height / 2, r: 15 };
             bubble2 = { x: width - 50, y: height / 2, r: 15 };
             miniBubbles = [];
@@ -68,12 +93,20 @@
             messages = [];
             player1Popped = false;
             player2Popped = false;
-            for (let i = 0; i < 8; i++) {
-                miniBubbles.push({ x: random(80, width - 80), y: random(80, height - 80), r: 5, col: random() < 0.5 ? 'yellow' : 'green' });
+
+            let totalBubbles = 8;
+            let bubblesPerSide = totalBubbles / 2;
+
+            for (let i = 0; i < bubblesPerSide; i++) {
+                miniBubbles.push({ x: random(80, width / 2 - 80), y: random(80, height - 80), r: 5, col: random() < 0.5 ? 'yellow' : 'green' });
             }
+            for (let i = 0; i < bubblesPerSide; i++) {
+                miniBubbles.push({ x: random(width / 2 + 80, width - 80), y: random(80, height - 80), r: 5, col: random() < 0.5 ? 'yellow' : 'green' });
+            }
+
             for (let x = 0; x < width; x += 30) {
-                spikes.push({ x: x, y: 40, r: 10 });
-                spikes.push({ x: x, y: height - 40, r: 10 });
+                spikes.push({ x: x, y: spikeOffset, r: 10 });
+                spikes.push({ x: x, y: height - spikeOffset, r: 10 });
             }
         }
 
@@ -125,24 +158,36 @@
             noStroke();
             if (gameState === "start") {
                 textSize(30);
-                fill(0, 0, 0, 150); // Fundo preto semi-transparente
-                rect(width / 2 - 200, height / 2 - 100, 400, 200);
-                fill(0, 255, 255 + sin(frameCount * 0.1) * 50); // Alterna ciano
-                if (frameCount % 60 < 20) fill(255, 0, 255 + sin(frameCount * 0.1) * 50); // Magenta
-                else if (frameCount % 60 < 40) fill(0, 255, 0 + sin(frameCount * 0.1) * 50); // Verde
+                fill(0, 0, 0, 150);
+                rect(width / 2 - 200, height / 2 - 150, 400, 300);
+                fill(0, 255, 255 + sin(frameCount * 0.1) * 50);
                 textStyle(BOLD);
                 textShadow(0, 0, 8, '#0ff');
-                text("Bubble Float Multiplayer\nJogador 1: WASD | Jogador 2: Setas\nClique para começar", width / 2, height / 2);
+                text("Bubble Float Multiplayer", width / 2, height / 2 - 120);
+                text("Escolha a dificuldade:", width / 2, height / 2 - 80);
+
+                // Botões de dificuldade
+                fill(0, 0, 0, 150);
+                rect(width / 2 - 100, height / 2 - 40, 200, 40);
+                rect(width / 2 - 100, height / 2 + 10, 200, 40);
+                rect(width / 2 - 100, height / 2 + 60, 200, 40);
+
+                fill(0, 255, 255);
+                text("Fácil", width / 2, height / 2 - 15);
+                text("Médio", width / 2, height / 2 + 35);
+                text("Difícil", width / 2, height / 2 + 85);
+
+                text("Jogador 1: WASD | Jogador 2: Setas", width / 2, height / 2 + 140);
                 textStyle(NORMAL);
                 textSize(20);
             } else if (gameState === "play") {
                 if (frameCount % 10 === 0 && timeLeft > 0) timeLeft--; // Diminui o tempo apenas se for maior que 0
 
                 // Lógica de movimento e limites da bolha
-                if (keyIsDown(87)) bubble1.y -= 15;
-                if (keyIsDown(65)) bubble1.x -= 15;
-                if (keyIsDown(83)) bubble1.y += 15;
-                if (keyIsDown(68)) bubble1.x += 15;
+                if (keyIsDown(87)) bubble1.y -= 15; // W
+                if (keyIsDown(65)) bubble1.x -= 15; // A
+                if (keyIsDown(83)) bubble1.y += 15; // S
+                if (keyIsDown(68)) bubble1.x += 15; // D
                 if (keyIsDown(LEFT_ARROW)) bubble2.x -= 15;
                 if (keyIsDown(RIGHT_ARROW)) bubble2.x += 15;
                 if (keyIsDown(UP_ARROW)) bubble2.y -= 15;
@@ -159,6 +204,7 @@
                     
                     let d1 = dist(bubble1.x, bubble1.y, miniBubbles[i].x, miniBubbles[i].y);
                     if (d1 < bubble1.r + miniBubbles[i].r && miniBubbles[i].x < width / 2) {
+                        if(popSound.isPlaying()) popSound.stop();
                         popSound.play(); // Reproduz o som ao estourar mini-bolha
                         for (let j = 0; j < 5; j++) {
                             particles.push({ x: miniBubbles[i].x, y: miniBubbles[i].y, vx: random(-2, 2), vy: random(-2, 2), life: 30, col: color(255, 255, 255, 100) });
@@ -180,6 +226,7 @@
                     }
                     let d2 = dist(bubble2.x, bubble2.y, miniBubbles[i].x, miniBubbles[i].y);
                     if (d2 < bubble2.r + miniBubbles[i].r && miniBubbles[i].x > width / 2) {
+                        if(popSound.isPlaying()) popSound.stop();
                         popSound.play(); // Reproduz o som ao estourar mini-bolha
                         for (let j = 0; j < 5; j++) {
                             particles.push({ x: miniBubbles[i].x, y: miniBubbles[i].y, vx: random(-2, 2), vy: random(-2, 2), life: 30, col: color(255, 255, 255, 100) });
@@ -261,16 +308,18 @@
                 // Colisão com espinhos
                 for (let spike of spikes) {
                     let d1 = dist(bubble1.x, bubble1.y, spike.x, spike.y);
-                    if (d1 < bubble1.r + spike.r) {
-                        popSound.play(); // Reproduz o som ao estourar na spike
+                    if (d1 < bubble1.r + spike.r && !player1Popped) {
+                        if(popSound.isPlaying()) popSound.stop();
+                        popSound.play(); // Som ao estourar na spike
                         for (let j = 0; j < 10; j++) {
                             particles.push({ x: bubble1.x, y: bubble1.y, vx: random(-3, 3), vy: random(-3, 3), life: 30, col: color(0, 255, 255, 100) });
                         }
                         player1Popped = true; // Define que a bolha do J1 estourou
                     }
                     let d2 = dist(bubble2.x, bubble2.y, spike.x, spike.y);
-                    if (d2 < bubble2.r + spike.r) {
-                        popSound.play(); // Reproduz o som ao estourar na spike
+                    if (d2 < bubble2.r + spike.r && !player2Popped) {
+                        if(popSound.isPlaying()) popSound.stop();
+                        popSound.play(); // Som ao estourar na spike
                         for (let j = 0; j < 10; j++) {
                             particles.push({ x: bubble2.x, y: bubble2.y, vx: random(-3, 3), vy: random(-3, 3), life: 30, col: color(255, 0, 255, 100) });
                         }
@@ -326,9 +375,20 @@
         }
 
         function mousePressed() {
-            if (gameState === "start" || gameState === "win") {
+            if (gameState === "start") {
+                if (mouseX > width / 2 - 100 && mouseX < width / 2 + 100 && mouseY > height / 2 - 40 && mouseY < height / 2) {
+                    setupDifficulty("easy");
+                    gameState = "play";
+                } else if (mouseX > width / 2 - 100 && mouseX < width / 2 + 100 && mouseY > height / 2 + 10 && mouseY < height / 2 + 50) {
+                    setupDifficulty("medium");
+                    gameState = "play";
+                } else if (mouseX > width / 2 - 100 && mouseX < width / 2 + 100 && mouseY > height / 2 + 60 && mouseY < height / 2 + 100) {
+                    setupDifficulty("hard");
+                    gameState = "play";
+                }
+            } else if (gameState === "win") {
                 resetLevel();
-                gameState = "play";
+                gameState = "start";
             }
         }
     </script>
