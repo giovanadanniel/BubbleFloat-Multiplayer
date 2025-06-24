@@ -45,3 +45,9 @@ Este projeto foi desenvolvido por:
 * **Giovanna Rita Santos Daniel**
 * **Leonardo Stall**
 * **Mirella Haisi Szvarça**
+
+---
+
+## 📽️ Video explicativo
+
+Acesse em: `https://youtu.be/_gClLSknVVc`
